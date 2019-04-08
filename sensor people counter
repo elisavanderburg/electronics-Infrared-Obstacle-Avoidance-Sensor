@@ -1,0 +1,91 @@
+import processing.serial.*;
+
+Serial COMport;
+boolean isClose = false;
+float FPS = 60;
+float deltaTime;
+float cooldown = 0; // buffer
+float cooldownDuration = 0.01; // in seconds
+
+ArrayList<Visitor> visitors = new ArrayList<Visitor>();
+
+void setup () 
+{
+  size(1024, 768); //screensize
+  //  println(Serial.list());
+  frameRate(FPS);
+  deltaTime = 1/FPS;
+  String portName = "COM3";
+  COMport = new Serial(this, portName, 9600);
+}
+
+void draw()
+{
+  background(200, 200, 200);
+  if (isClose)
+  {
+    if (cooldown == 0)
+    {
+      Visitor newVisitor = new Visitor();
+      newVisitor.position =  new PVector(random(0, width), random(0, height));
+      newVisitor.colour = color(random(0,255),random(0,255),random(0,255));
+      newVisitor.direction = PVector.random2D();
+      visitors.add(newVisitor);
+    }
+    cooldown = cooldownDuration;
+  } else
+  {
+    cooldown -= deltaTime;
+    if (cooldown <= 0)
+      cooldown = 0;
+  }
+   textSize(30);
+     textAlign(CENTER);
+  text("how many people can you handle before you feel overwhelmed?",width/2, 70); 
+  
+  for (Visitor v : visitors) // loop through visitors  https://processing.org/reference/for.html
+  {
+    v.position = PVector.add(v.position,PVector.mult(v.direction,8)); //position and speed
+    
+    if (v.position.x <= 0) //bounce
+    {
+      v.direction.x = v.direction.x * -1;
+    }
+    if (v.position.x >= width)
+    {
+      v.direction.x = v.direction.x * -1;
+    }
+    if (v.position.y <= 0)
+    {
+      v.direction.y = v.direction.y * -1;
+    }
+    if (v.position.y >= height)
+    {
+      v.direction.y = v.direction.y * -1;
+    }
+    
+    fill(v.colour);
+    ellipse(v.position.x, v.position.y, 100, 100); // size and shape
+  }
+   // fill(0, 102, 153);
+  textSize(100);
+  textAlign(CENTER);
+  text(visitors.size(), width/2, height/2);
+}
+
+void serialEvent(Serial myport) 
+{
+  int distanceValue = COMport.read();
+  if (distanceValue == 0)
+    isClose = true;
+  else
+    isClose = false;
+}
+
+class Visitor // https://processing.org/reference/class.html
+{
+ PVector position;
+ PVector direction;
+ float size;
+ color colour;
+}
